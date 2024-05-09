@@ -8,6 +8,7 @@ import (
 	"mapdns/pkg/db-entity"
 	"mapdns/pkg/db-srv"
 	"net/http"
+	"strconv"
 )
 
 type Server struct {
@@ -67,19 +68,17 @@ func (srv *Server) ListenAndServe() error {
 		c.JSON(http.StatusOK, NewRespOK(nil))
 	})
 	dnsGroup.POST("/delete/:id", func(c *gin.Context) {
-		var json struct {
-			ID uint64 `json:"id" binding:"required"`
-		}
-		if err := c.ShouldBindUri(&json); err != nil {
-			c.JSON(http.StatusBadRequest, NewRespFail(err.Error()))
-			return
-		}
-		record, err := srv.db.GetRecordById(json.ID)
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, NewRespFail(err.Error()))
 			return
 		}
-		err = srv.db.DeleteRecordById([]uint64{json.ID})
+		record, err := srv.db.GetRecordById(uint64(id))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, NewRespFail(err.Error()))
+			return
+		}
+		err = srv.db.DeleteRecordById([]uint64{uint64(id)})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, NewRespFail(err.Error()))
 			return
